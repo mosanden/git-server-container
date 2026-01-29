@@ -46,7 +46,6 @@
 #MaxAuthTries 6
 #MaxSessions 10
 
-RSAAuthentication yes
 PubkeyAuthentication yes
 
 # The default is to check both .ssh/authorized_keys and .ssh/authorized_keys2
@@ -70,8 +69,8 @@ AuthorizedKeysFile	.ssh/authorized_keys
 #IgnoreRhosts yes
 
 # To disable tunneled clear text passwords, change to no here!
-PasswordAuthentication no
-#PermitEmptyPasswords no
+PasswordAuthentication yes
+PermitEmptyPasswords yes
 
 # Change to no to disable s/key passwords
 #ChallengeResponseAuthentication yes
@@ -143,3 +142,10 @@ Subsystem	sftp	/usr/lib/ssh/sftp-server
 #	AllowTcpForwarding no
 #	PermitTTY no
 #	ForceCommand cvs server
+
+Match User git
+    PermitEmptyPasswords yes
+    PasswordAuthentication yes
+    AllowAgentForwarding no
+    AllowTcpForwarding no
+    X11Forwarding no

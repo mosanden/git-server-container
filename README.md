@@ -1,76 +1,38 @@
-# git-server-docker
-A lightweight Git Server Docker image built with Alpine Linux. Available on [GitHub](https://github.com/jkarlosb/git-server-docker) and [Docker Hub](https://hub.docker.com/r/jkarlos/git-server-docker/)
+# git-server-container
 
-!["image git server docker" "git server docker"](https://raw.githubusercontent.com/jkarlosb/git-server-docker/master/git-server-docker.jpg)
+This repo is based on the work of [jkarlosb/git-server-docker](https://github.com/jkarlosb/git-server-docker).
 
-### Basic Usage
+A lightweight Git server container image built with Alpine Linux **with no authentication required**.
 
-How to run the container in port 2222 with two volumes: keys volume for public keys and repos volume for git repositories:
+If you would like to quickly spin up a local Git server for something like a live demo this image is for you. This container image provides a temporary Git server with focus on fast deployment without any configuration. It **comes with a default repository** `temp` and can be **accessed with no authentication** as the user `git`. Never use this in production!
 
-	$ docker run -d -p 2222:22 -v ~/git-server/keys:/git-server/keys -v ~/git-server/repos:/git-server/repos jkarlos/git-server-docker
+## Usage
 
-How to use a public key:
+How to run the container in port 2222:
+```bash
+podman run -it --rm -p 2222:22 ghcr.io/mosanden/git-server-container
+```
+How to check that the container works:
+```bash
+ssh git@<server-ip> -p 2222
+# ...
+# Welcome to git-server-docker!
+# You've successfully authenticated, but I do not
+# provide interactive shell access.
+# ...
+```
 
-    Copy them to keys folder: 
-	- From host: $ cp ~/.ssh/id_rsa.pub ~/git-server/keys
-	- From remote: $ scp ~/.ssh/id_rsa.pub user@host:~/git-server/keys
-	You need restart the container when keys are updated:
-	$ docker restart <container-id>
-	
-How to check that container works (you must to have a key):
+Push an existing folder to the repository:
+```bash
+mkdir temp && cd temp && touch README.md
+git init
+git remote set-url origin ssh://git@localhost:2222/git-server/repos/temp.git
+git add .
+git commit -m "Initial commit"
+git push -u origin main
+```
 
-	$ ssh git@<ip-docker-server> -p 2222
-	...
-	Welcome to git-server-docker!
-	You've successfully authenticated, but I do not
-	provide interactive shell access.
-	...
-
-How to create a new repo:
-
-	$ cd myrepo
-	$ git init --shared=true
-	$ git add .
-	$ git commit -m "my first commit"
-	$ cd ..
-	$ git clone --bare myrepo myrepo.git
-
-How to upload a repo:
-
-	From host:
-	$ mv myrepo.git ~/git-server/repos
-	From remote:
-	$ scp -r myrepo.git user@host:~/git-server/repos
-
-How clone a repository:
-
-	$ git clone ssh://git@<ip-docker-server>:2222/git-server/repos/myrepo.git
-
-### Arguments
-
-* **Expose ports**: 22
-* **Volumes**:
- * */git-server/keys*: Volume to store the users public keys
- * */git-server/repos*: Volume to store the repositories
-
-### SSH Keys
-
-How generate a pair keys in client machine:
-
-	$ ssh-keygen -t rsa
-
-How upload quickly a public key to host volume:
-
-	$ scp ~/.ssh/id_rsa.pub user@host:~/git-server/keys
-
-### Build Image
-
-How to make the image:
-
-	$ docker build -t git-server-docker .
-	
-### Docker-Compose
-
-You can edit docker-compose.yml and run this container with docker-compose:
-
-	$ docker-compose up -d
+Build the image:
+```bash
+podman build -t git-server-container .
+```
