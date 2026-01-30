@@ -15,6 +15,7 @@ WORKDIR /git-server/
 RUN mkdir -p repos/temp.git && \
   git init --shared=true --bare repos/temp.git/
 
+
 # -D flag avoids password generation
 # -s flag changes user's shell
 RUN mkdir /git-server/keys \
