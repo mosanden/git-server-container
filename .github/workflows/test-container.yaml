@@ -1,0 +1,53 @@
+name: Test Git Server Container
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test-git-server:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build Image
+        run: docker build -t git-server-container .
+
+      - name: Start Container
+        run: |
+          docker run -d --name git-server -p 2222:22 git-server-container
+          sleep 5
+
+      - name: Setup SSH for Testing
+        run: |
+          # Generate SSH key and add it to ~/.ssh/known_hosts to avoid "Host verification" error
+          ssh-keygen -t ed25519 -C "test@example.com" -f ~/.ssh/id_ed25519 -N ""
+          ssh-keyscan -p 2222 localhost >> ~/.ssh/known_hosts
+          
+      - name: Test SSH Connection
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -p 2222 git@localhost || echo "Connection test finished"
+
+      - name: Test Git Push
+        run: |
+          git config --global user.email "test@example.com"
+          git config --global user.name "Test User"
+          git config --global init.defaultBranch main
+
+          mkdir temp_test
+          cd temp_test
+          git init
+          touch README.md
+          git add .
+          git commit -m "Initial commit"
+          git remote add origin ssh://git@localhost:2222/git-server/repos/temp.git
+          # Set GIT_SSH_COMMAND to avoid interactive prompts
+          GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -p 2222" git push -u origin main
+
+      - name: Check Container Logs on Failure
+        if: failure()
+        run: docker logs git-server
